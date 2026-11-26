@@ -1,535 +1,602 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#1E3A8A" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="IBAN Checker" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E3A8A'/%3E%3Cpath d='M32 12L12 24v4h40v-4L32 12zm-14 20v16h6V32h-6zm11 0v16h6V32h-6zm11 0v16h6V32h-6zM12 52h40v4H12v-4z' fill='%23FFFFFF'/%3E%3C/svg%3E" />
-  <title>IBAN CHECKER 1.0 by 3wis</title>
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter & JetBrains Mono per i codici -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'Segoe UI', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Consolas', 'monospace'],
-          },
-          colors: {
-            bgMain: '#EEF2F6',
-            bgCard: '#FFFFFF',
-            primary: '#1E3A8A',
-            primaryLight: '#DBEAFE',
-            accent: '#2563EB',
-            accentHover: '#1D4ED8',
-            textDark: '#0F172A',
-            textMuted: '#64748B',
-            borderCol: '#CBD5E1',
-            successBg: '#DCFCE7',
-            successFg: '#15803D',
-            errorBg: '#FEE2E2',
-            errorFg: '#B91C1C',
-            neutralBg: '#F1F5F9',
-            bankBadgeBg: '#EFF6FF',
-            bankBadgeFg: '#1D4ED8',
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IBAN CHECKER 1.0 by 3wis - Verifica validità MOD97 e CIN ed estrazione ABI, CAB e Conto Corrente per IBAN italiani.">
+    <title>IBAN CHECKER 1.0 by 3wis</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231E3A8A%22/><text y=%22.9em%22 font-size=%2265%22 x=%2214%22>🏦</text></svg>">
+    <style>
+        :root {
+            --bg-main: #EEF2F6;
+            --bg-card: #FFFFFF;
+            --primary: #1E3A8A;
+            --primary-light: #DBEAFE;
+            --primary-hover: #BFDBFE;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --border-color: #CBD5E1;
+            --success-bg: #DCFCE7;
+            --success-fg: #15803D;
+            --error-bg: #FEE2E2;
+            --error-fg: #B91C1C;
+            --neutral-bg: #F1F5F9;
+            --bank-bg: #EFF6FF;
+            --bank-fg: #1D4ED8;
         }
-      }
-    }
-  </script>
-  <style>
-    /* Ottimizzazione leggibilità, touch-action e safe-area per dispositivi mobile */
-    html, body {
-      background-color: #EEF2F6;
-      color: #0F172A;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-    body {
-      padding-top: max(0.5rem, env(safe-area-inset-top));
-      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-      padding-left: max(0.5rem, env(safe-area-inset-left));
-      padding-right: max(0.5rem, env(safe-area-inset-right));
-    }
-    @media (min-width: 520px) {
-      body {
-        padding: 1.5rem;
-      }
-    }
-    button, label[for="csvFileInput"] {
-      touch-action: manipulation;
-    }
-    .window-shadow {
-      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-    }
-    /* Impedisce lo zoom automatico su iOS Safari (>= 16px) e mantiene 27 caratteri ben leggibili */
-    .iban-field {
-      font-size: clamp(16px, 3.6vw, 17px);
-      letter-spacing: clamp(0.01em, 0.35vw, 0.05em);
-      font-variant-numeric: tabular-nums;
-    }
-    .coord-value {
-      font-size: clamp(13.5px, 3.7vw, 16px);
-      font-variant-numeric: tabular-nums;
-    }
-  </style>
-</head>
-<body class="min-h-screen flex items-start sm:items-center justify-center antialiased selection:bg-primaryLight selection:text-primary">
 
-  <!-- Contenitore principale fluid-responsive -->
-  <main class="w-full max-w-[580px] bg-bgMain rounded-2xl border border-borderCol overflow-hidden window-shadow">
-    
-    <!-- INTESTAZIONE SUPERIORE -->
-    <header class="bg-primary px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-2">
-      <div class="flex items-baseline gap-1.5 sm:gap-2 min-w-0">
-        <h1 class="text-white font-bold tracking-tight flex items-center gap-1.5 sm:gap-2 truncate" style="font-size: clamp(1rem, 4.3vw, 1.25rem);">
-          <span aria-hidden="true" class="shrink-0">🏦</span>
-          <span class="truncate">IBAN CHECKER 1.0</span>
-        </h1>
-        <span class="text-[#93C5FD] text-xs italic font-medium shrink-0">by 3wis</span>
-      </div>
-      <span class="bg-accent text-white text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-md tracking-wider uppercase shadow-sm shrink-0">
-        IT • 27 CARATTERI
-      </span>
-    </header>
-
-    <!-- CORPO PRINCIPALE -->
-    <div class="p-3 sm:p-6 space-y-3 sm:space-y-3.5">
-
-      <!-- CARD 1: INSERIMENTO -->
-      <section class="bg-bgCard border border-borderCol rounded-xl p-3.5 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <label for="ibanInput" class="text-xs sm:text-sm font-bold text-textDark">
-            Codice IBAN completo:
-          </label>
-          <span id="lblContatore" class="text-xs font-bold text-accent tabular-nums">
-            0 / 27 caratteri
-          </span>
-        </div>
-
-        <!-- Su schermi < 520px i pulsanti stanno su una riga dedicata per lasciare l'intera larghezza ai 27 caratteri -->
-        <div class="flex flex-col min-[520px]:flex-row items-stretch min-[520px]:items-center gap-2">
-          <input
-            type="text"
-            id="ibanInput"
-            inputmode="text"
-            enterkeyhint="done"
-            maxlength="34"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            placeholder="IT60X0542811101000000123456"
-            class="iban-field w-full min-[520px]:flex-1 font-mono font-bold text-center bg-[#F8FAFC] text-textDark border border-borderCol rounded-lg px-2.5 sm:px-3 py-2.5 min-h-[46px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition"
-          />
-
-          <div class="grid grid-cols-2 min-[520px]:flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              id="btnIncolla"
-              class="min-h-[44px] bg-accent hover:bg-accentHover active:bg-accentHover active:scale-[0.98] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-lg transition cursor-pointer shadow-sm flex items-center justify-center"
-            >
-              Incolla
-            </button>
-            <button
-              type="button"
-              id="btnSvuota"
-              class="min-h-[44px] bg-[#E2E8F0] hover:bg-[#CBD5E1] active:bg-[#CBD5E1] active:scale-[0.98] text-textDark text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center justify-center"
-            >
-              Svuota
-            </button>
-          </div>
-        </div>
-        <!-- Messaggio discreto per eventuali avvisi appunti/CSV -->
-        <p id="lblFeedbackInput" role="status" class="hidden mt-2 text-xs text-primary bg-bankBadgeBg border border-primaryLight rounded-lg px-2.5 py-1.5 text-center font-medium"></p>
-      </section>
-
-      <!-- CARD 2: COORDINATE ESTRATTE & BANCA -->
-      <section class="bg-bgCard border border-borderCol rounded-xl p-3.5 sm:p-4 shadow-sm space-y-3">
-        
-        <!-- Riquadro superiore istituto bancario + caricamento CSV discreto -->
-        <div class="space-y-1.5">
-          <div
-            id="lblNomeBanca"
-            class="w-full text-center text-xs sm:text-sm font-bold bg-neutralBg text-textMuted py-2.5 px-3 rounded-lg transition-colors duration-200 leading-snug"
-          >
-            Inserisci l'IBAN per identificare la banca
-          </div>
-
-          <div class="flex flex-wrap items-center justify-between gap-2 px-1 pt-0.5">
-            <span id="lblCsvStatus" class="text-[11px] text-textMuted">
-              Database offline attivo (54 istituti)
-            </span>
-            <label
-              for="csvFileInput"
-              class="inline-flex items-center min-h-[32px] px-1.5 text-[11px] font-medium text-textMuted hover:text-primary active:text-primary underline decoration-dotted underline-offset-2 cursor-pointer transition"
-              title="Importa un file CSV locale con formato ABI;Nome Banca"
-            >
-              <span>Carica banche_abi.csv</span>
-              <input type="file" id="csvFileInput" accept=".csv,text/csv" class="hidden" />
-            </label>
-          </div>
-        </div>
-
-        <!-- Tabella/Righe Coordinate ottimizzate per schermi da 360px+ e touch >= 44px -->
-        <div class="divide-y divide-slate-200/80 border border-slate-200/80 rounded-lg overflow-hidden">
-          
-          <!-- Riga CIN -->
-          <div class="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 min-h-[52px] bg-bgCard">
-            <div class="flex flex-col min-[420px]:flex-row min-[420px]:items-baseline min-[420px]:gap-1.5 shrink-0 min-w-[78px] min-[420px]:min-w-[155px] sm:min-w-[175px]">
-              <span class="font-bold text-xs sm:text-sm text-primary w-9 leading-tight">CIN</span>
-              <span class="text-[10px] sm:text-xs text-textMuted leading-tight">(1 lettera controllo)</span>
-            </div>
-            <span id="valCin" class="coord-value font-mono font-bold text-textDark flex-1 px-1 text-left break-all">—</span>
-            <button
-              type="button"
-              data-copy-target="valCin"
-              class="btn-copy min-h-[44px] bg-primaryLight hover:bg-[#BFDBFE] active:bg-[#BFDBFE] active:scale-[0.97] text-primary text-xs font-bold w-20 sm:w-24 py-2 rounded-lg transition cursor-pointer shrink-0 flex items-center justify-center"
-            >
-              Copia
-            </button>
-          </div>
-
-          <!-- Riga ABI -->
-          <div class="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 min-h-[52px] bg-[#F8FAFC]">
-            <div class="flex flex-col min-[420px]:flex-row min-[420px]:items-baseline min-[420px]:gap-1.5 shrink-0 min-w-[78px] min-[420px]:min-w-[155px] sm:min-w-[175px]">
-              <span class="font-bold text-xs sm:text-sm text-primary w-9 leading-tight">ABI</span>
-              <span class="text-[10px] sm:text-xs text-textMuted leading-tight">(5 cifre banca)</span>
-            </div>
-            <span id="valAbi" class="coord-value font-mono font-bold text-textDark flex-1 px-1 text-left break-all">—</span>
-            <button
-              type="button"
-              data-copy-target="valAbi"
-              class="btn-copy min-h-[44px] bg-primaryLight hover:bg-[#BFDBFE] active:bg-[#BFDBFE] active:scale-[0.97] text-primary text-xs font-bold w-20 sm:w-24 py-2 rounded-lg transition cursor-pointer shrink-0 flex items-center justify-center"
-            >
-              Copia
-            </button>
-          </div>
-
-          <!-- Riga CAB -->
-          <div class="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 min-h-[52px] bg-bgCard">
-            <div class="flex flex-col min-[420px]:flex-row min-[420px]:items-baseline min-[420px]:gap-1.5 shrink-0 min-w-[78px] min-[420px]:min-w-[155px] sm:min-w-[175px]">
-              <span class="font-bold text-xs sm:text-sm text-primary w-9 leading-tight">CAB</span>
-              <span class="text-[10px] sm:text-xs text-textMuted leading-tight">(5 cifre filiale)</span>
-            </div>
-            <span id="valCab" class="coord-value font-mono font-bold text-textDark flex-1 px-1 text-left break-all">—</span>
-            <button
-              type="button"
-              data-copy-target="valCab"
-              class="btn-copy min-h-[44px] bg-primaryLight hover:bg-[#BFDBFE] active:bg-[#BFDBFE] active:scale-[0.97] text-primary text-xs font-bold w-20 sm:w-24 py-2 rounded-lg transition cursor-pointer shrink-0 flex items-center justify-center"
-            >
-              Copia
-            </button>
-          </div>
-
-          <!-- Riga C/C -->
-          <div class="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 min-h-[52px] bg-[#F8FAFC]">
-            <div class="flex flex-col min-[420px]:flex-row min-[420px]:items-baseline min-[420px]:gap-1.5 shrink-0 min-w-[78px] min-[420px]:min-w-[155px] sm:min-w-[175px]">
-              <span class="font-bold text-xs sm:text-sm text-primary w-9 leading-tight">C/C</span>
-              <span class="text-[10px] sm:text-xs text-textMuted leading-tight">(12 car. conto)</span>
-            </div>
-            <span id="valCc" class="coord-value font-mono font-bold text-textDark flex-1 px-1 text-left break-all">—</span>
-            <button
-              type="button"
-              data-copy-target="valCc"
-              class="btn-copy min-h-[44px] bg-primaryLight hover:bg-[#BFDBFE] active:bg-[#BFDBFE] active:scale-[0.97] text-primary text-xs font-bold w-20 sm:w-24 py-2 rounded-lg transition cursor-pointer shrink-0 flex items-center justify-center"
-            >
-              Copia
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- BARRA STATO VALIDAZIONE -->
-      <div
-        id="lblStato"
-        role="status"
-        aria-live="polite"
-        class="w-full text-center text-xs sm:text-sm font-bold bg-neutralBg text-textMuted py-3 px-4 rounded-xl border border-transparent transition-colors duration-200 leading-snug"
-      >
-        In attesa dei 27 caratteri per la verifica...
-      </div>
-
-    </div>
-  </main>
-
-  <script>
-    /**
-     * Pulisce il testo inserito preservando la posizione del cursore durante la digitazione
-     */
-    function formattaELimita() {
-      const testoOriginale = ibanInput.value;
-      const posCursore = ibanInput.selectionStart;
-
-      // Rimuove spazi e simboli, converte in maiuscolo e limita a 27 caratteri
-      const pulito = testoOriginale.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 27);
-
-      if (testoOriginale !== pulito) {
-        // Calcola quanti caratteri validi precedevano il cursore prima della pulizia
-        const prefissoValido = testoOriginale
-          .slice(0, posCursore ?? testoOriginale.length)
-          .replace(/[^a-zA-Z0-9]/g, '');
-        const nuovaPos = Math.min(prefissoValido.length, pulito.length);
-
-        ibanInput.value = pulito;
-        try {
-          ibanInput.setSelectionRange(nuovaPos, nuovaPos);
-        } catch (e) {
-          // Ignora su browser che non supportano setSelectionRange
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
-      }
 
-      aggiornaRisultati(pulito);
-    }
-
-    /**
-     * Aggiorna coordinate estratte, banca e barra di stato di validazione
-     */
-    function aggiornaRisultati(iban) {
-      const paese = iban.slice(0, 2);
-      const checkDigits = iban.slice(2, 4);
-      const cin = iban.slice(4, 5);
-      const abi = iban.slice(5, 10);
-      const cab = iban.slice(10, 15);
-      const cc = iban.slice(15, 27);
-
-      lblContatore.textContent = `${iban.length} / 27 caratteri`;
-      valCin.textContent = cin || "—";
-      valAbi.textContent = abi || "—";
-      valCab.textContent = cab || "—";
-      valCc.textContent = cc || "—";
-
-      // Identificazione istituto bancario appena l'ABI raggiunge 5 cifre
-      if (abi.length === 5 && /^\d{5}$/.test(abi)) {
-        const nomeBanca = BANCHE_ITALIANE[abi];
-        if (nomeBanca) {
-          lblNomeBanca.textContent = `🏛 ${nomeBanca}`;
-          lblNomeBanca.className = "w-full text-center text-xs sm:text-sm font-bold bg-bankBadgeBg text-bankBadgeFg py-2.5 px-3 rounded-lg transition-colors duration-200 leading-snug";
-        } else {
-          lblNomeBanca.textContent = `Istituto non presente nell'elenco locale (ABI ${abi})`;
-          lblNomeBanca.className = "w-full text-center text-xs sm:text-sm font-bold bg-neutralBg text-textMuted py-2.5 px-3 rounded-lg transition-colors duration-200 leading-snug";
+        body {
+            background-color: var(--bg-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-      } else {
-        lblNomeBanca.textContent = "Inserisci l'IBAN per identificare la banca";
-        lblNomeBanca.className = "w-full text-center text-xs sm:text-sm font-bold bg-neutralBg text-textMuted py-2.5 px-3 rounded-lg transition-colors duration-200 leading-snug";
-      }
 
-      // Stato intermedio prima dei 27 caratteri
-      if (iban.length < 27) {
-        impostaStato("neutral", "In attesa dei 27 caratteri per la verifica...");
-        return;
-      }
-
-      // Controllo prefisso IT
-      if (paese !== "IT") {
-        impostaStato("error", "✖ ERRORE: L'IBAN italiano deve iniziare con 'IT'");
-        return;
-      }
-
-      // Controllo campi numerici obbligatori
-      if (!(/^\d{2}$/.test(checkDigits) && /^\d{5}$/.test(abi) && /^\d{5}$/.test(cab))) {
-        impostaStato("error", "✖ ERRORE: Check digit, ABI e CAB devono essere numerici");
-        return;
-      }
-
-      const mod97Ok = verificaMod97(iban);
-      const cinAtteso = calcolaCin(abi + cab + cc);
-      const cinOk = (cin === cinAtteso);
-
-      if (mod97Ok && cinOk) {
-        impostaStato("success", "✔ IBAN VALIDO — Controlli MOD97 e CIN superati");
-      } else if (!cinOk && mod97Ok) {
-        impostaStato("error", `✖ NON VALIDO — CIN errato (atteso '${cinAtteso}')`);
-      } else if (!mod97Ok && cinOk) {
-        impostaStato("error", "✖ NON VALIDO — Controllo MOD97 fallito");
-      } else {
-        impostaStato("error", "✖ NON VALIDO — Errori su MOD97 e CIN");
-      }
-    }
-
-    /**
-     * Aggiorna aspetto e testo della barra di stato inferiore
-     */
-    function impostaStato(tipo, messaggio) {
-      lblStato.textContent = messaggio;
-      const baseClasses = "w-full text-center text-xs sm:text-sm font-bold py-3 px-4 rounded-xl transition-colors duration-200 leading-snug";
-
-      if (tipo === "success") {
-        lblStato.className = `${baseClasses} bg-successBg text-successFg`;
-      } else if (tipo === "error") {
-        lblStato.className = `${baseClasses} bg-errorBg text-errorFg`;
-      } else {
-        lblStato.className = `${baseClasses} bg-neutralBg text-textMuted`;
-      }
-    }
-
-    /**
-     * Mostra un breve messaggio discreto sotto l'input (es. se il browser mobile blocca gli appunti)
-     */
-    function mostraMessaggioInput(msg) {
-      lblFeedbackInput.textContent = msg;
-      lblFeedbackInput.classList.remove('hidden');
-      clearTimeout(lblFeedbackInput._timer);
-      lblFeedbackInput._timer = setTimeout(() => {
-        lblFeedbackInput.classList.add('hidden');
-      }, 4200);
-    }
-
-    /**
-     * Copia negli appunti con fallback compatibile anche con mobile e ambienti restrittivi
-     */
-    function copiaTestoNegliAppunti(testo) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(testo).catch(() => fallbackCopia(testo));
-      } else {
-        fallbackCopia(testo);
-      }
-    }
-
-    function fallbackCopia(testo) {
-      const tempArea = document.createElement('textarea');
-      tempArea.value = testo;
-      tempArea.setAttribute('readonly', '');
-      tempArea.style.position = 'fixed';
-      tempArea.style.top = '0';
-      tempArea.style.left = '-9999px';
-      tempArea.style.fontSize = '16px';
-      document.body.appendChild(tempArea);
-      tempArea.focus();
-      tempArea.select();
-      tempArea.setSelectionRange(0, testo.length);
-      try {
-        document.execCommand('copy');
-      } catch (err) {
-        // Ignora silenziosamente
-      }
-      document.body.removeChild(tempArea);
-    }
-
-    // Eventi Pulsanti Copia singoli campi
-    document.querySelectorAll('.btn-copy').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-copy-target');
-        const targetEl = document.getElementById(targetId);
-        const testo = targetEl ? targetEl.textContent.trim() : "";
-
-        if (testo && testo !== "—") {
-          copiaTestoNegliAppunti(testo);
-
-          // Feedback visivo identico allo script Python (1.1 secondi)
-          btn.textContent = "✔ Copiato";
-          btn.classList.remove('bg-primaryLight', 'hover:bg-[#BFDBFE]', 'active:bg-[#BFDBFE]', 'text-primary');
-          btn.classList.add('bg-successBg', 'text-successFg');
-
-          clearTimeout(btn._resetTimer);
-          btn._resetTimer = setTimeout(() => {
-            btn.textContent = "Copia";
-            btn.classList.remove('bg-successBg', 'text-successFg');
-            btn.classList.add('bg-primaryLight', 'hover:bg-[#BFDBFE]', 'active:bg-[#BFDBFE]', 'text-primary');
-          }, 1100);
+        .app-window {
+            width: 100%;
+            max-width: 580px;
+            background-color: var(--bg-main);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--border-color);
         }
-      });
-    });
 
-    // Pulsante Incolla ottimizzato per mobile (iOS Safari e Android Chrome)
-    btnIncolla.addEventListener('click', async () => {
-      try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-          const testoAppunti = await navigator.clipboard.readText();
-          if (testoAppunti && testoAppunti.trim()) {
-            ibanInput.value = testoAppunti;
-            formattaELimita();
-            lblFeedbackInput.classList.add('hidden');
-          } else {
-            ibanInput.focus();
-            mostraMessaggioInput("Gli appunti sono vuoti. Tocca la casella qui sopra e seleziona 'Incolla'.");
-          }
-        } else {
-          ibanInput.focus();
-          ibanInput.select();
-          mostraMessaggioInput("Tocca la casella qui sopra e premi 'Incolla' dal menu del telefono.");
+        /* Header */
+        .header {
+            background-color: var(--primary);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-      } catch (err) {
-        // Su iOS Safari / file locali la lettura automatica può richiedere il tap nativo sull'input
-        ibanInput.focus();
-        ibanInput.select();
-        mostraMessaggioInput("Per sicurezza del browser, tocca la casella qui sopra e scegli 'Incolla'.");
-      }
-    });
 
-    // Pulsante Svuota
-    btnSvuota.addEventListener('click', () => {
-      ibanInput.value = "";
-      lblFeedbackInput.classList.add('hidden');
-      formattaELimita();
-      ibanInput.focus();
-    });
+        .title-box {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
 
-    // Chiude la tastiera mobile quando si preme Invio / Fine
-    ibanInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        ibanInput.blur();
-      }
-    });
+        .title-main {
+            color: #FFFFFF;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
 
-    // Pulsante Svuota
-    btnSvuota.addEventListener('click', () => {
-      ibanInput.value = "";
-      formattaELimita();
-      ibanInput.focus();
-    });
+        .title-author {
+            color: #93C5FD;
+            font-size: 12px;
+            font-style: italic;
+        }
 
-    // Importazione CSV locale banche_abi.csv (formato: ABI;Nome Banca)
-    csvFileInput.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+        .badge-header {
+            background-color: var(--accent);
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const contenuto = e.target.result;
-        const righe = contenuto.split(/\r?\n/);
-        let importate = 0;
+        /* Contenitore principale */
+        .main-container {
+            padding: 20px 24px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
 
-        for (const riga of righe) {
-          const parti = riga.split(';');
-          if (parti.length >= 2) {
-            const abiRaw = parti[0].trim().replace(/^["']|["']$/g, '');
-            const nomeBanca = parti.slice(1).join(';').trim().replace(/^["']|["']$/g, '');
-            const abiCode = abiRaw.padStart(5, '0');
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+        }
 
-            if (/^\d{5}$/.test(abiCode) && nomeBanca) {
-              BANCHE_ITALIANE[abiCode] = nomeBanca;
-              importate++;
+        /* Sezione Input */
+        .input-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .counter {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .iban-input {
+            flex: 1;
+            min-width: 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            background-color: #F8FAFC;
+            border: 1.5px solid var(--border-color);
+            border-radius: 6px;
+            padding: 9px 10px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .iban-input:focus {
+            border-color: var(--accent);
+            background-color: #FFFFFF;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 0 14px;
+            cursor: pointer;
+            transition: background-color 0.15s, transform 0.05s;
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: #E2E8F0;
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background-color: #CBD5E1;
+        }
+
+        /* Badge Banca */
+        .bank-banner {
+            background-color: var(--neutral-bg);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .bank-banner.found {
+            background-color: var(--bank-bg);
+            color: var(--bank-fg);
+        }
+
+        /* Tabella coordinate */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-row:nth-child(even) {
+            background-color: #F8FAFC;
+        }
+
+        .data-row td {
+            padding: 8px 6px;
+        }
+
+        .col-label {
+            width: 44%;
+        }
+
+        .coord-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--primary);
+            display: inline-block;
+            width: 38px;
+        }
+
+        .coord-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .col-value {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.5px;
+        }
+
+        .col-action {
+            text-align: right;
+            width: 95px;
+        }
+
+        .btn-copy {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 86px;
+            transition: all 0.15s;
+        }
+
+        .btn-copy:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-copy.copied {
+            background-color: var(--success-bg);
+            color: var(--success-fg);
+        }
+
+        /* Barra di stato validazione */
+        .status-bar {
+            background-color: var(--neutral-bg);
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 700;
+            text-align: center;
+            padding: 12px 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .status-bar.valid {
+            background-color: var(--success-bg);
+            color: var(--success-fg);
+        }
+
+        .status-bar.error {
+            background-color: var(--error-bg);
+            color: var(--error-fg);
+        }
+
+        @media (max-width: 480px) {
+            .coord-sub {
+                display: none;
             }
-          }
+            .col-label {
+                width: 22%;
+            }
+            .input-row {
+                flex-wrap: wrap;
+            }
+            .iban-input {
+                width: 100%;
+                flex: none;
+            }
+            .btn {
+                flex: 1;
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-window">
+    <!-- Intestazione -->
+    <div class="header">
+        <div class="title-box">
+            <span class="title-main">🏦 IBAN CHECKER 1.0</span>
+            <span class="title-author">by 3wis</span>
+        </div>
+        <span class="badge-header">IT • 27 CARATTERI</span>
+    </div>
+
+    <div class="main-container">
+        <!-- Card 1: Inserimento -->
+        <div class="card">
+            <div class="input-top">
+                <span class="input-label">Codice IBAN completo:</span>
+                <span class="counter" id="counter">0 / 27 caratteri</span>
+            </div>
+            <div class="input-row">
+                <input type="text" id="ibanInput" class="iban-input" placeholder="Incolla o scrivi l'IBAN..." autocomplete="off" spellcheck="false" autofocus>
+                <button class="btn btn-primary" onclick="incollaIban()">Incolla</button>
+                <button class="btn btn-secondary" onclick="svuotaIban()">Svuota</button>
+            </div>
+        </div>
+
+        <!-- Card 2: Risultati e Banca -->
+        <div class="card">
+            <div class="bank-banner" id="bankBanner">Inserisci l'IBAN per identificare la banca</div>
+
+            <table class="data-table">
+                <tr class="data-row">
+                    <td class="col-label"><span class="coord-title">CIN</span><span class="coord-sub">(1 lettera di controllo)</span></td>
+                    <td class="col-value" id="valCin">—</td>
+                    <td class="col-action"><button class="btn-copy" onclick="copiaValore('valCin', this)">Copia</button></td>
+                </tr>
+                <tr class="data-row">
+                    <td class="col-label"><span class="coord-title">ABI</span><span class="coord-sub">(5 cifre banca)</span></td>
+                    <td class="col-value" id="valAbi">—</td>
+                    <td class="col-action"><button class="btn-copy" onclick="copiaValore('valAbi', this)">Copia</button></td>
+                </tr>
+                <tr class="data-row">
+                    <td class="col-label"><span class="coord-title">CAB</span><span class="coord-sub">(5 cifre filiale)</span></td>
+                    <td class="col-value" id="valCab">—</td>
+                    <td class="col-action"><button class="btn-copy" onclick="copiaValore('valCab', this)">Copia</button></td>
+                </tr>
+                <tr class="data-row">
+                    <td class="col-label"><span class="coord-title">C/C</span><span class="coord-sub">(12 caratteri conto)</span></td>
+                    <td class="col-value" id="valCc">—</td>
+                    <td class="col-action"><button class="btn-copy" onclick="copiaValore('valCc', this)">Copia</button></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            In attesa dei 27 caratteri per la verifica...
+        </div>
+    </div>
+</div>
+
+<script>
+    // Archivio offline principali banche italiane
+    const BANCHE_ITALIANE = {
+        "01000": "Banca d'Italia",
+        "01005": "Banca Nazionale del Lavoro (BNL)",
+        "01015": "Banco di Sardegna",
+        "01030": "Banca Monte dei Paschi di Siena (MPS)",
+        "02008": "UniCredit",
+        "03002": "Banca Sella",
+        "03015": "FinecoBank",
+        "03032": "Credem - Credito Emiliano",
+        "03048": "Banca del Piemonte",
+        "03062": "Banca Mediolanum",
+        "03069": "Intesa Sanpaolo",
+        "03075": "Banca del Piemonte",
+        "03084": "Banca Cesare Ponti",
+        "03104": "Deutsche Bank",
+        "03111": "UBI Banca (Intesa Sanpaolo)",
+        "03124": "Banca del Fucino",
+        "03268": "Banca Sella Holding",
+        "03296": "Fideuram - Intesa Sanpaolo Private Banking",
+        "03385": "Banca Generali",
+        "03440": "Banco di Desio e della Brianza",
+        "03442": "Banca Widiba",
+        "03475": "ING Bank N.V.",
+        "03589": "Allianz Bank Financial Advisors",
+        "03599": "Cassa Centrale Banca",
+        "03669": "Revolut Bank UAB (Succursale Italia)",
+        "05018": "Banca Etica (Banca Popolare Etica)",
+        "05034": "Banco BPM",
+        "05036": "Banca Agricola Popolare di Sicilia",
+        "05080": "Banca di Imola",
+        "05104": "Banca Popolare del Lazio",
+        "05116": "Banca Valsabbina",
+        "05216": "Credito Valtellinese (Crédit Agricole)",
+        "05387": "BPER Banca",
+        "05424": "Banca Popolare di Bari",
+        "05584": "Banca Popolare di Milano (Banco BPM)",
+        "05696": "Banca Popolare di Sondrio",
+        "05856": "Banca Popolare dell'Alto Adige (Volksbank)",
+        "06045": "Cassa di Risparmio di Bolzano (Sparkasse)",
+        "06085": "Cassa di Risparmio di Asti",
+        "06175": "Banca Carige (BPER Banca)",
+        "06230": "Crédit Agricole Italia",
+        "06270": "Cassa di Risparmio di Bra",
+        "06385": "Cassa di Risparmio di Volterra",
+        "07601": "Poste Italiane (BancoPosta / Postepay)",
+        "08000": "ICCREA Banca (Credito Cooperativo)",
+        "08327": "Banca di Credito Cooperativo di Roma",
+        "08453": "BCC di Milano",
+        "08669": "BVR Banca - Banche Venete Riunite",
+        "08735": "Banca del Territorio Lombardo (BCC)",
+        "10639": "Compass Banca",
+        "36000": "Banca d'Italia - Tesoreria",
+        "36081": "Hype S.p.A.",
+        "36092": "Tinaba / Banca Profilo",
+        "36772": "PayPal (Europe)"
+    };
+
+    const DISPARI = {
+        '0': 1, '1': 0, '2': 5, '3': 7, '4': 9, '5': 13, '6': 15, '7': 17, '8': 19, '9': 21,
+        'A': 1, 'B': 0, 'C': 5, 'D': 7, 'E': 9, 'F': 13, 'G': 15, 'H': 17, 'I': 19, 'J': 21,
+        'K': 2, 'L': 4, 'M': 18, 'N': 20, 'O': 11, 'P': 3, 'Q': 6, 'R': 8, 'S': 12, 'T': 14,
+        'U': 16, 'V': 10, 'W': 22, 'X': 25, 'Y': 24, 'Z': 23
+    };
+
+    const PARI = {
+        '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+        'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
+        'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19,
+        'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25
+    };
+
+    const inputEl = document.getElementById('ibanInput');
+    const counterEl = document.getElementById('counter');
+    const bankBannerEl = document.getElementById('bankBanner');
+    const statusBarEl = document.getElementById('statusBar');
+
+    inputEl.addEventListener('input', () => {
+        let pulito = inputEl.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        if (pulito.length > 27) {
+            pulito = pulito.slice(0, 27);
+        }
+        if (inputEl.value !== pulito) {
+            inputEl.value = pulito;
+        }
+        aggiornaRisultati(pulito);
+    });
+
+    function calcolaCin(bbanSenzaCin) {
+        let somma = 0;
+        for (let i = 0; i < bbanSenzaCin.length; i++) {
+            const ch = bbanSenzaCin[i];
+            somma += (i % 2 === 0) ? (DISPARI[ch] || 0) : (PARI[ch] || 0);
+        }
+        return String.fromCharCode((somma % 26) + 65);
+    }
+
+    function verificaMod97(iban) {
+        const riordinato = iban.slice(4) + iban.slice(0, 4);
+        let numerico = "";
+        for (let i = 0; i < riordinato.length; i++) {
+            const code = riordinato.charCodeAt(i);
+            if (code >= 48 && code <= 57) {
+                numerico += riordinato[i];
+            } else if (code >= 65 && code <= 90) {
+                numerico += (code - 55).toString();
+            } else {
+                return false;
+            }
+        }
+        return (BigInt(numerico) % 97n) === 1n;
+    }
+
+    function aggiornaRisultati(iban) {
+        const paese = iban.slice(0, 2);
+        const checkDigits = iban.slice(2, 4);
+        const cin = iban.slice(4, 5);
+        const abi = iban.slice(5, 10);
+        const cab = iban.slice(10, 15);
+        const cc = iban.slice(15, 27);
+
+        counterEl.textContent = `${iban.length} / 27 caratteri`;
+        document.getElementById('valCin').textContent = cin || '—';
+        document.getElementById('valAbi').textContent = abi || '—';
+        document.getElementById('valCab').textContent = cab || '—';
+        document.getElementById('valCc').textContent = cc || '—';
+
+        if (abi.length === 5 && /^\d{5}$/.test(abi)) {
+            const nomeBanca = BANCHE_ITALIANE[abi];
+            if (nomeBanca) {
+                bankBannerEl.textContent = `🏛 ${nomeBanca}`;
+                bankBannerEl.className = 'bank-banner found';
+            } else {
+                bankBannerEl.textContent = `Istituto non presente nell'elenco locale (ABI ${abi})`;
+                bankBannerEl.className = 'bank-banner';
+            }
+        } else {
+            bankBannerEl.textContent = "Inserisci l'IBAN per identificare la banca";
+            bankBannerEl.className = 'bank-banner';
         }
 
-        const totaleBanche = Object.keys(BANCHE_ITALIANE).length;
-        lblCsvStatus.textContent = `✔ CSV caricato (+${importate} righe • ${totaleBanche} istituti)`;
-        lblCsvStatus.classList.remove('text-textMuted');
-        lblCsvStatus.classList.add('text-successFg', 'font-medium');
+        if (iban.length < 27) {
+            statusBarEl.textContent = 'In attesa dei 27 caratteri per la verifica...';
+            statusBarEl.className = 'status-bar';
+            return;
+        }
 
-        // Riesegue subito la verifica nel caso ci sia già un IBAN inserito
-        formattaELimita();
-      };
-      reader.readAsText(file, 'UTF-8');
-    });
+        if (paese !== 'IT') {
+            statusBarEl.textContent = "✖ ERRORE: L'IBAN italiano deve iniziare con 'IT'";
+            statusBarEl.className = 'status-bar error';
+            return;
+        }
 
-    // Ascolto digitazione in tempo reale e focus iniziale
-    ibanInput.addEventListener('input', formattaELimita);
-    window.addEventListener('DOMContentLoaded', () => {
-      ibanInput.focus();
-    });
-  </script>
+        if (!/^\d{2}$/.test(checkDigits) || !/^\d{5}$/.test(abi) || !/^\d{5}$/.test(cab)) {
+            statusBarEl.textContent = '✖ ERRORE: Check digit, ABI e CAB devono essere numerici';
+            statusBarEl.className = 'status-bar error';
+            return;
+        }
+
+        const mod97Ok = verificaMod97(iban);
+        const cinAtteso = calcolaCin(abi + cab + cc);
+        const cinOk = (cin === cinAtteso);
+
+        if (mod97Ok && cinOk) {
+            statusBarEl.textContent = '✔ IBAN VALIDO — Controlli MOD97 e CIN superati';
+            statusBarEl.className = 'status-bar valid';
+        } else if (!cinOk && mod97Ok) {
+            statusBarEl.textContent = `✖ NON VALIDO — CIN errato (atteso '${cinAtteso}')`;
+            statusBarEl.className = 'status-bar error';
+        } else if (!mod97Ok && cinOk) {
+            statusBarEl.textContent = '✖ NON VALIDO — Controllo MOD97 fallito';
+            statusBarEl.className = 'status-bar error';
+        } else {
+            statusBarEl.textContent = '✖ NON VALIDO — Errori su MOD97 e CIN';
+            statusBarEl.className = 'status-bar error';
+        }
+    }
+
+    function mostraFeedbackCopia(btn) {
+        btn.textContent = '✔ Copiato';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = 'Copia';
+            btn.classList.remove('copied');
+        }, 1100);
+    }
+
+    function copiaValore(elementId, btn) {
+        const testo = document.getElementById(elementId).textContent;
+        if (!testo || testo === '—') return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(testo).then(() => mostraFeedbackCopia(btn));
+        } else {
+            const tempInput = document.createElement('input');
+            tempInput.value = testo;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            mostraFeedbackCopia(btn);
+        }
+    }
+
+    async function incollaIban() {
+        try {
+            const testo = await navigator.clipboard.readText();
+            inputEl.value = testo;
+            inputEl.dispatchEvent(new Event('input'));
+        } catch (err) {
+            inputEl.focus();
+            alert("Per sicurezza del browser, premi Ctrl+V direttamente nella casella di testo.");
+        }
+    }
+
+    function svuotaIban() {
+        inputEl.value = '';
+        inputEl.dispatchEvent(new Event('input'));
+        inputEl.focus();
+    }
+</script>
+
 </body>
 </html>

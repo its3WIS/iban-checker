@@ -52,13 +52,14 @@
       overscroll-behavior-y: none;
     }
     .iban-field {
-      font-size: clamp(16px, 3.6vw, 17px);
+      font-size: clamp(16px, 3.8vw, 17.5px);
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
     }
-    @media (max-width: 380px) {
+    @media (max-width: 400px) {
       .iban-field {
-        letter-spacing: 0.01em;
+        font-size: 16px;
+        letter-spacing: -0.015em;
       }
     }
   </style>
@@ -66,7 +67,7 @@
 <body class="bg-bgMain text-textDark min-h-[100dvh] flex flex-col items-center justify-start sm:justify-center p-2.5 sm:p-5 select-none">
 
   <!-- Contenitore principale stile finestra applicativa responsiva -->
-  <main class="w-full max-w-[560px] bg-bgMain rounded-2xl shadow-xl border border-borderColor overflow-hidden my-auto">
+  <main class="w-full max-w-[640px] bg-bgMain rounded-2xl shadow-xl border border-borderColor overflow-hidden my-auto">
 
     <!-- Intestazione superiore -->
     <header class="bg-primary px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-2">
@@ -107,7 +108,7 @@
             spellcheck="false"
             enterkeyhint="done"
             placeholder="IT60X0542811101000000123456"
-            class="iban-field w-full flex-1 font-mono font-bold text-center bg-[#F8FAFC] text-textDark border border-borderColor rounded-lg px-2.5 py-2.5 min-h-[46px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition placeholder:text-slate-300 placeholder:font-normal select-text"
+            class="iban-field w-full flex-1 font-mono font-bold text-center bg-[#F8FAFC] text-textDark border border-borderColor rounded-lg px-2 sm:px-3 py-2.5 min-h-[46px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition placeholder:text-slate-300 placeholder:font-normal select-text"
           />
           <div class="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
             <button
